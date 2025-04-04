@@ -1,4 +1,4 @@
-package tg
+package events
 
 import (
 	"context"
@@ -6,19 +6,9 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"telegram-informer/internal/db"
-	"time"
 )
 
-func HandleAddEvent(storage db.StorageHandler) func(ctx context.Context, b *bot.Bot, update *models.Update) {
-	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
-		err := storage.AddEvent(ctx, int(update.CallbackQuery.From.ID), "", time.Time{}.Local(), time.Time{}.Local())
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-}
-
-func HandleGetEvent(storage db.StorageHandler) func(ctx context.Context, b *bot.Bot, update *models.Update) {
+func HandleGetEventToday(storage db.StorageHandler) func(ctx context.Context, b *bot.Bot, update *models.Update) {
 	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
 		events, err := storage.GetEvents(ctx, int(update.CallbackQuery.From.ID))
 		if err != nil {
@@ -45,10 +35,5 @@ func HandleGetEvent(storage db.StorageHandler) func(ctx context.Context, b *bot.
 				InlineKeyboard: buttons,
 			},
 		})
-	}
-}
-func HandleDeleteEvent(storage db.StorageHandler) func(ctx context.Context, b *bot.Bot, update *models.Update) {
-	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
-
 	}
 }

@@ -1,4 +1,8 @@
 telegram:
   token: "7978393304:AAGWyWiT1JTTJeRMron1lMBmkLJo4ZulJDI"
+redis:
+  address: "localhost:6379"
+  password: ""
+  db: 0
 db:
   connection: "postgres://admin:secret@localhost:5432/telegram_informer?sslmode=disable"
