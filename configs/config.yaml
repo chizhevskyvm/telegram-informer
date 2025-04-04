@@ -1,4 +1,4 @@
 telegram:
   token: "7978393304:AAGWyWiT1JTTJeRMron1lMBmkLJo4ZulJDI"
 db:
-  connection: "store.db"
+  connection: "postgres://admin:secret@localhost:5432/telegram_informer?sslmode=disable"

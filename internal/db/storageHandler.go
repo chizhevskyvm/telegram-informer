@@ -7,7 +7,7 @@ import (
 )
 
 type StorageHandler interface {
-	AddEvent(ctx context.Context, userId string, time time.Time, information string)
+	AddEvent(ctx context.Context, userId int, title string, time time.Time, timeToNotify time.Time) error
 	DeleteEvent(ctx context.Context, userId int, eventId string) error
 	GetEvents(ctx context.Context, userId int) ([]domain.Event, error)
 }

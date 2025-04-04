@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/signal"
 	appconfig "telegram-informer/internal/config"
-	"telegram-informer/internal/db/sqllite"
+	"telegram-informer/internal/db/postgres"
 	"telegram-informer/internal/server"
 )
 
@@ -17,7 +17,11 @@ func main() {
 		panic(err)
 	}
 
-	db, err := sqllite.New(config.DatabaseConfig.Connection)
+	db, err := postgres.New(config.DatabaseConfig.Connection)
+	if err != nil {
+		panic(err)
+	}
+	err = db.RunMigrations()
 	if err != nil {
 		panic(err)
 	}
