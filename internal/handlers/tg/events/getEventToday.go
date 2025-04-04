@@ -23,7 +23,7 @@ func HandleGetEventToday(storage db.StorageHandler) func(ctx context.Context, b 
 			buttons = append(buttons, []models.InlineKeyboardButton{
 				{
 					Text:         text,
-					CallbackData: "noop",
+					CallbackData: fmt.Sprintf("%s%d", CBGetById, event.ID),
 				},
 			})
 		}

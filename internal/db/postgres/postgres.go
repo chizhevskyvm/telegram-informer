@@ -59,13 +59,27 @@ func (s *Storage) AddEvent(ctx context.Context, userId int, title string, time t
 	return nil
 }
 
-func (s *Storage) DeleteEvent(ctx context.Context, userId int, eventId string) error {
+func (s *Storage) DeleteEvent(ctx context.Context, userId int, eventId int) error {
 	query := `DELETE FROM events WHERE user_id = $1 AND id = $2`
 	_, err := s.db.ExecContext(ctx, query, userId, eventId)
 	if err != nil {
 		return fmt.Errorf("delete event: %w", err)
 	}
 	return nil
+}
+
+func (s *Storage) GetEvent(ctx context.Context, userId int, id int) (domain.Event, error) {
+	var event domain.Event
+
+	query := `SELECT id, user_id, title, time, timetonotify FROM events WHERE user_id = $1 AND id = $2 LIMIT 1`
+	err := s.db.QueryRowContext(ctx, query, userId, id).Scan(
+		&event.ID, &event.UserID, &event.Title, &event.Notification, &event.TimeToNotify,
+	)
+	if err != nil {
+		return event, fmt.Errorf("query row: %w", err)
+	}
+
+	return event, nil
 }
 
 func (s *Storage) GetEvents(ctx context.Context, userId int) ([]domain.Event, error) {

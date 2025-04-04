@@ -32,8 +32,6 @@ func HandleAddCallback(cache iRedis.Cache) func(ctx context.Context, b *bot.Bot,
 		}
 
 		userId := update.CallbackQuery.From.ID
-		chatId := update.CallbackQuery.Message.Message.Chat.ID
-
 		state, err := cache.Get(tg.GetUserStateKey(userId))
 		if err != nil && !errors.Is(err, redis.Nil) {
 			fmt.Println("Ошибка при получении состояния:", err)
@@ -45,7 +43,9 @@ func HandleAddCallback(cache iRedis.Cache) func(ctx context.Context, b *bot.Bot,
 			_ = cache.Set(tg.GetUserStateKey(userId), state, time.Minute*10)
 		}
 
-		handleTitleState(ctx, b, chatId)
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.CallbackQuery.Message.Message.Chat.ID,
+			Text:   "✏️ Введите заголовок события.\nНапример: \"День рождения бабушки 🎉\""})
 	}
 }
 
@@ -55,9 +55,8 @@ func HandleAddEventText(storage db.StorageHandler, cache iRedis.Cache) func(ctx 
 			return
 		}
 
-		userId := update.Message.From.ID
-		chatId := update.Message.Chat.ID
 		userInput := update.Message.Text
+		userId := update.Message.From.ID
 
 		state, err := cache.Get(tg.GetUserStateKey(userId))
 		if err != nil && !errors.Is(err, redis.Nil) {
@@ -77,21 +76,23 @@ func HandleAddEventText(storage db.StorageHandler, cache iRedis.Cache) func(ctx 
 
 		switch state {
 		case tg.GetUserStageState(StateAddEventTitle, userId):
-			handleAddEventTitleState(ctx, cache, b, userId, chatId, userInput, data, dataKey)
+			handleAddEventTitleState(ctx, cache, b, update, userInput, data, dataKey)
 
 		case tg.GetUserStageState(StateAddEventDate, userId):
-			handleAddEventDateState(ctx, cache, b, userId, chatId, userInput, data, dataKey)
+			handleAddEventDateState(ctx, cache, b, update, userInput, data, dataKey)
 
 		case tg.GetUserStageState(StateAddEventTime, userId):
-			handleAddEventTimeState(ctx, cache, b, userId, chatId, userInput, data, dataKey)
+			handleAddEventTimeState(ctx, cache, b, update, userInput, data, dataKey)
 
 		case tg.GetUserStageState(StateAddEventDone, userId):
-			handleAddEventDoneState(ctx, storage, cache, b, userId, chatId, data, dataKey)
+			handleAddEventDoneState(ctx, storage, cache, b, update, data, dataKey)
 		}
 	}
 }
 
-func handleAddEventTitleState(ctx context.Context, cache iRedis.Cache, b *bot.Bot, userId int64, chatId int64, userInput string, data map[string]string, dataKey string) {
+func handleAddEventTitleState(ctx context.Context, cache iRedis.Cache, b *bot.Bot, update *models.Update, userInput string, data map[string]string, dataKey string) {
+	userId := update.Message.From.ID
+	chatId := update.Message.Chat.ID
 	data[titleValue] = userInput
 	_ = cache.Set(tg.GetUserStateKey(userId), tg.GetUserStageState(StateAddEventDate, userId), time.Minute*10)
 	_ = iRedis.SetTyped(cache, dataKey, data, time.Minute*10)
@@ -101,7 +102,9 @@ func handleAddEventTitleState(ctx context.Context, cache iRedis.Cache, b *bot.Bo
 		Text:   "📅 Введите дату события в формате ГГГГ-ММ-ДД.\nНапример: \"2025-12-31\""})
 }
 
-func handleAddEventDateState(ctx context.Context, cache iRedis.Cache, b *bot.Bot, userId int64, chatId int64, userInput string, data map[string]string, dataKey string) {
+func handleAddEventDateState(ctx context.Context, cache iRedis.Cache, b *bot.Bot, update *models.Update, userInput string, data map[string]string, dataKey string) {
+	userId := update.Message.From.ID
+	chatId := update.Message.Chat.ID
 	data[dateValue] = userInput
 	_ = cache.Set(tg.GetUserStateKey(userId), tg.GetUserStageState(StateAddEventTime, userId), time.Minute*10)
 	_ = iRedis.SetTyped(cache, dataKey, data, time.Minute*10)
@@ -111,7 +114,9 @@ func handleAddEventDateState(ctx context.Context, cache iRedis.Cache, b *bot.Bot
 		Text:   "⏰ Введите время события в 24-часовом формате ЧЧ:ММ.\nНапример: \"14:30\""})
 }
 
-func handleAddEventTimeState(ctx context.Context, cache iRedis.Cache, b *bot.Bot, userId int64, chatId int64, userInput string, data map[string]string, dataKey string) {
+func handleAddEventTimeState(ctx context.Context, cache iRedis.Cache, b *bot.Bot, update *models.Update, userInput string, data map[string]string, dataKey string) {
+	userId := update.Message.From.ID
+	chatId := update.Message.Chat.ID
 	data[timeValue] = userInput
 	_ = cache.Set(tg.GetUserStateKey(userId), tg.GetUserStageState(StateAddEventDone, userId), time.Minute*10)
 	_ = iRedis.SetTyped(cache, dataKey, data, time.Minute*10)
@@ -121,37 +126,21 @@ func handleAddEventTimeState(ctx context.Context, cache iRedis.Cache, b *bot.Bot
 		Text:   "✅ Всё готово! Подтвердите создание события, написав \"да\" или \"нет\"."})
 }
 
-func handleAddEventDoneState(ctx context.Context, storage db.StorageHandler, cache iRedis.Cache, b *bot.Bot, userId int64, chatId int64, data map[string]string, dataKey string) {
+func handleAddEventDoneState(ctx context.Context, storage db.StorageHandler, cache iRedis.Cache, b *bot.Bot, update *models.Update, data map[string]string, dataKey string) {
+	userId := update.Message.From.ID
+	chatId := update.Message.Chat.ID
 	_ = cache.Delete(tg.GetUserStateKey(userId))
 	_ = cache.Delete(dataKey)
 
-	title := data[titleValue]
-	date := data[dateValue]
-	timeStr := data[timeValue]
+	dateParsed, _ := time.Parse("2006-01-02", data[dateValue])
+	timeParsed, _ := time.Parse("15:04", data[timeValue])
 
-	datetimeStr := fmt.Sprintf("%sT%s:00", date, timeStr)
-	eventTime, err := time.Parse("2006-01-02T15:04:05", datetimeStr)
-	if err != nil {
-		fmt.Printf("Ошибка парсинга даты и времени: %v\n", err)
-		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatId,
-			Text:   "❌ Ошибка при создании события. Убедитесь, что дата и время введены верно.",
-		})
-		return
-	}
-
-	_ = storage.AddEvent(ctx, int(userId), title, eventTime, eventTime)
+	_ = storage.AddEvent(ctx, int(userId), data[titleValue], dateParsed, timeParsed)
 
 	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: chatId,
 		Text:   "🎉 Событие создано!",
 	})
-}
-
-func handleTitleState(ctx context.Context, b *bot.Bot, chatID int64) {
-	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: chatID,
-		Text:   "✏️ Введите заголовок события.\nНапример: \"День рождения бабушки 🎉\""})
 }
 
 func isAddEventState(state string, userId int64) bool {
