@@ -86,7 +86,7 @@ func HandleAddEventText(storage db.StorageHandler, cache iRedis.Cache) func(ctx 
 			handleAddEventTimeState(ctx, cache, b, userId, chatId, userInput, data, dataKey)
 
 		case tg.GetUserStageState(StateAddEventDone, userId):
-			handleAddEventDoneState(ctx, storage, cache, b, userId, chatId, dataKey)
+			handleAddEventDoneState(ctx, storage, cache, b, userId, chatId, data, dataKey)
 		}
 	}
 }
@@ -121,9 +121,26 @@ func handleAddEventTimeState(ctx context.Context, cache iRedis.Cache, b *bot.Bot
 		Text:   "✅ Всё готово! Подтвердите создание события, написав \"да\" или \"нет\"."})
 }
 
-func handleAddEventDoneState(ctx context.Context, storage db.StorageHandler, cache iRedis.Cache, b *bot.Bot, userId int64, chatId int64, dataKey string) {
+func handleAddEventDoneState(ctx context.Context, storage db.StorageHandler, cache iRedis.Cache, b *bot.Bot, userId int64, chatId int64, data map[string]string, dataKey string) {
 	_ = cache.Delete(tg.GetUserStateKey(userId))
 	_ = cache.Delete(dataKey)
+
+	title := data[titleValue]
+	date := data[dateValue]
+	timeStr := data[timeValue]
+
+	datetimeStr := fmt.Sprintf("%sT%s:00", date, timeStr)
+	eventTime, err := time.Parse("2006-01-02T15:04:05", datetimeStr)
+	if err != nil {
+		fmt.Printf("Ошибка парсинга даты и времени: %v\n", err)
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatId,
+			Text:   "❌ Ошибка при создании события. Убедитесь, что дата и время введены верно.",
+		})
+		return
+	}
+
+	_ = storage.AddEvent(ctx, int(userId), title, eventTime, eventTime)
 
 	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: chatId,
