@@ -10,27 +10,35 @@ import (
 
 func HandleGetEventToday(storage db.StorageHandler) func(ctx context.Context, b *bot.Bot, update *models.Update) {
 	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
-		events, err := storage.GetEvents(ctx, int(update.CallbackQuery.From.ID))
+		events, err := storage.GetEventsFromToday(ctx, int(update.CallbackQuery.From.ID))
 		if err != nil {
 			_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID: update.CallbackQuery.Message.Message.Chat.ID,
-				Text:   "Видимо ничего нет :("})
+				Text:   "❌ Пожалуйста, попробуйте позже. "})
 		}
 
-		var buttons [][]models.InlineKeyboardButton
-		for _, event := range events {
-			text := fmt.Sprintf("📌 %s (%s)", event.Title, event.TimeToNotify.Format("15:04"))
-			buttons = append(buttons, []models.InlineKeyboardButton{
-				{
-					Text:         text,
-					CallbackData: fmt.Sprintf("%s%d", CBGetById, event.ID),
-				},
+		if len(events) == 0 {
+			_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: update.CallbackQuery.Message.Message.Chat.ID,
+				Text:   "\"📅 Всё чисто! Можно валяться весь день 😎\"",
 			})
+
+			return
+		}
+
+		buttons := make([][]models.InlineKeyboardButton, 0, len(events))
+		for _, e := range events {
+			label := fmt.Sprintf("📌 %s — 🕒 %s", e.Title, e.TimeToNotify.Format("15:04"))
+			button := models.InlineKeyboardButton{
+				Text:         label,
+				CallbackData: fmt.Sprintf("%s%d", CBGetById, e.ID),
+			}
+			buttons = append(buttons, []models.InlineKeyboardButton{button})
 		}
 
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.CallbackQuery.Message.Message.Chat.ID,
-			Text:   "События на сегодня:",
+			Text:   "📅 События на сегодня: ",
 			ReplyMarkup: &models.InlineKeyboardMarkup{
 				InlineKeyboard: buttons,
 			},
