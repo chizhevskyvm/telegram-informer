@@ -82,7 +82,31 @@ func (s *Storage) GetEvent(ctx context.Context, userId int, id int) (domain.Even
 	return event, nil
 }
 
-func (s *Storage) GetEventsFromToday(ctx context.Context, userId int) ([]domain.Event, error) {
+func (s *Storage) GetEventsToday(ctx context.Context) ([]domain.Event, error) {
+	query := `SELECT id, user_id, title, time, timetonotify FROM events WHERE time::date = CURRENT_DATE`
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("query: %w", err)
+	}
+	defer rows.Close()
+
+	var events []domain.Event
+	for rows.Next() {
+		var e domain.Event
+		err := rows.Scan(&e.ID, &e.UserID, &e.Title, &e.Notification, &e.TimeToNotify)
+		if err != nil {
+			return nil, fmt.Errorf("scan: %w", err)
+		}
+		events = append(events, e)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows err: %w", err)
+	}
+
+	return events, nil
+}
+func (s *Storage) GetEventsTodayFromUser(ctx context.Context, userId int) ([]domain.Event, error) {
 	query := `SELECT id, user_id, title, time, timetonotify FROM events WHERE user_id = $1 AND time::date = CURRENT_DATE`
 	rows, err := s.db.QueryContext(ctx, query, userId)
 	if err != nil {

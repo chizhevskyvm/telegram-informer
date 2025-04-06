@@ -10,7 +10,7 @@ import (
 
 func HandleGetEventToday(storage db.StorageHandler) func(ctx context.Context, b *bot.Bot, update *models.Update) {
 	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
-		events, err := storage.GetEventsFromToday(ctx, int(update.CallbackQuery.From.ID))
+		events, err := storage.GetEventsTodayFromUser(ctx, int(update.CallbackQuery.From.ID))
 		if err != nil {
 			_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID: update.CallbackQuery.Message.Message.Chat.ID,

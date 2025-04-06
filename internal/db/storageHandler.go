@@ -12,5 +12,6 @@ type StorageHandler interface {
 	DeleteEventFromToday(ctx context.Context, userId int) error
 	GetEvents(ctx context.Context, userId int) ([]domain.Event, error)
 	GetEvent(ctx context.Context, userId int, id int) (domain.Event, error)
-	GetEventsFromToday(ctx context.Context, userId int) ([]domain.Event, error)
+	GetEventsTodayFromUser(ctx context.Context, userId int) ([]domain.Event, error)
+	GetEventsToday(ctx context.Context) ([]domain.Event, error)
 }
