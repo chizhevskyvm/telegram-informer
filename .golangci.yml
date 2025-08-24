@@ -1,0 +1,14 @@
+run:
+  timeout: 5m
+  tests: false
+
+linters:
+  enable:
+    - gofmt
+    - goimports
+
+linters-settings:
+  gofmt:
+    simplify: true
+  goimports:
+    local-prefixes: telegram-informer

@@ -11,4 +11,5 @@ type Event struct {
 	Title        string
 	Notification time.Time
 	TimeToNotify time.Time
+	IsSent       bool
 }
