@@ -1,5 +1,5 @@
 telegram:
-  token: "7978393304:AAHezGungpFf_FrYWtYyDCKIA-3fLaHIFRc"
+  token: ""
 redis:
   address: "localhost:6380"
   password: ""
