@@ -2,6 +2,7 @@ package deletealleventstoday
 
 import (
 	"context"
+	"telegram-informer/internal/bot/ui/texts"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -19,28 +20,27 @@ func NewHandle(eventService EventService) *Handle {
 	return &Handle{eventService: eventService}
 }
 
-func (h Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update) {
+func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	userID := int(update.CallbackQuery.From.ID)
+	chatID := update.CallbackQuery.Message.Message.Chat.ID
+	messageID := update.CallbackQuery.Message.Message.ID
 
-	err := h.eventService.DeleteEventFromToday(ctx, userID)
-	if err != nil {
+	if err := h.eventService.DeleteEventFromToday(ctx, userID); err != nil {
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.CallbackQuery.Message.Message.Chat.ID,
-			Text:   "❌ Не удалось отменить события. Попробуйте позже.",
+			ChatID: chatID,
+			Text:   texts.MsgDeleteAllError,
 		})
 		return
 	}
 
 	_, _ = b.EditMessageReplyMarkup(ctx, &bot.EditMessageReplyMarkupParams{
-		ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
-		MessageID: update.CallbackQuery.Message.Message.ID,
-		ReplyMarkup: &models.InlineKeyboardMarkup{
-			InlineKeyboard: [][]models.InlineKeyboardButton{},
-		},
+		ChatID:      chatID,
+		MessageID:   messageID,
+		ReplyMarkup: &models.InlineKeyboardMarkup{InlineKeyboard: [][]models.InlineKeyboardButton{}},
 	})
 
 	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: update.CallbackQuery.Message.Message.Chat.ID,
-		Text:   "✅ Все события на сегодня отменены.",
+		ChatID: chatID,
+		Text:   texts.MsgDeleteAllSuccess,
 	})
 }

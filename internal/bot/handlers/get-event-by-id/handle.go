@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"telegram-informer/internal/bot/handlers"
+	"telegram-informer/internal/bot/ui/texts"
 	updatehelper "telegram-informer/internal/bot/update-helper"
 	"telegram-informer/internal/domain"
 
@@ -24,20 +25,22 @@ func NewHandle(eventService EventService) *Handler {
 	return &Handler{eventService: eventService}
 }
 
-func (h Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) {
-	id, _ := updatehelper.GetId(update)
+func (h *Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) {
+	userID := int(update.CallbackQuery.From.ID)
+	chatID := update.CallbackQuery.Message.Message.Chat.ID
 
-	event, err := h.eventService.GetEvent(ctx, int(update.CallbackQuery.From.ID), id)
+	id, _ := updatehelper.GetId(update)
+	event, err := h.eventService.GetEvent(ctx, userID, id)
 	if err != nil {
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.CallbackQuery.Message.Message.Chat.ID,
-			Text:   "❌ Не удалось найти событие. Пожалуйста, попробуйте позже.",
+			ChatID: chatID,
+			Text:   texts.MsgEventNotFound,
 		})
 		return
 	}
 
 	messageText := fmt.Sprintf(
-		"📅 <b>%s</b>\n🕒 Когда напомнить: <b>%s в %s</b>\n",
+		texts.MsgEventDetails,
 		event.Title,
 		event.Notification.Format("02.01.2006"),
 		event.TimeToNotify.Format("15:04"),
@@ -46,14 +49,14 @@ func (h Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) 
 	deleteButton := [][]models.InlineKeyboardButton{
 		{
 			{
-				Text:         "🗑 Удалить",
+				Text:         texts.BtnDeleteEvent,
 				CallbackData: fmt.Sprintf("%s%d", handlers.CBDeleteById, event.ID),
 			},
 		},
 	}
 
 	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID:      update.CallbackQuery.Message.Message.Chat.ID,
+		ChatID:      chatID,
 		Text:        messageText,
 		ParseMode:   models.ParseModeHTML,
 		ReplyMarkup: &models.InlineKeyboardMarkup{InlineKeyboard: deleteButton},

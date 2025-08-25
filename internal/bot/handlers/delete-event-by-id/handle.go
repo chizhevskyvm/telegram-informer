@@ -2,6 +2,7 @@ package deleteeventbyid
 
 import (
 	"context"
+	"telegram-informer/internal/bot/ui/texts"
 	updatehelper "telegram-informer/internal/bot/update-helper"
 
 	"github.com/go-telegram/bot"
@@ -21,17 +22,20 @@ func NewHandle(eventService EventService) Handle {
 }
 
 func (h Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	userID := int(update.CallbackQuery.From.ID)
+	chatID := update.CallbackQuery.Message.Message.Chat.ID
+
 	id, _ := updatehelper.GetId(update)
-	err := h.eventService.DeleteEvent(ctx, int(update.CallbackQuery.From.ID), id)
-	if err != nil {
+	if err := h.eventService.DeleteEvent(ctx, userID, id); err != nil {
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.CallbackQuery.Message.Message.Chat.ID,
-			Text:   "❌ Не удалось найти событие. Пожалуйста, попробуйте позже.",
+			ChatID: chatID,
+			Text:   texts.MsgDeleteError,
 		})
 		return
 	}
+
 	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: update.CallbackQuery.Message.Message.Chat.ID,
-		Text:   "✅ Событие успешно удалено.",
+		ChatID: chatID,
+		Text:   texts.MsgDeleteSuccess,
 	})
 }

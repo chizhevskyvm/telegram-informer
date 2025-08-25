@@ -9,7 +9,7 @@ import (
 	deleteeventbyid "telegram-informer/internal/bot/handlers/delete-event-by-id"
 	geteventbyid "telegram-informer/internal/bot/handlers/get-event-by-id"
 	geteventtoday "telegram-informer/internal/bot/handlers/get-event-today"
-	"telegram-informer/internal/bot/handlers/start"
+	mainmenu "telegram-informer/internal/bot/handlers/main_menu"
 	"telegram-informer/internal/domain"
 	"time"
 
@@ -37,13 +37,13 @@ type Cache interface {
 func RegisterHandlers(b *bot.Bot, storage StorageService, cache Cache) {
 	getEventById := geteventbyid.NewHandle(storage)
 	addEventText := addeventtext.NewHandle(storage, cache)
-	startH := start.NewHandle()
+	mainMenu := mainmenu.NewHandle()
 	createEvent := createevent.NewHandle(cache)
 	deleteEventById := deleteeventbyid.NewHandle(storage)
 	getEventToday := geteventtoday.NewHandle(storage)
 	deleteAllEventsToday := deletealleventstoday.NewHandle(storage)
 
-	b.RegisterHandler(bot.HandlerTypeMessageText, events.Start, bot.MatchTypeExact, startH.Handler)
+	b.RegisterHandler(bot.HandlerTypeMessageText, events.Start, bot.MatchTypeExact, mainMenu.Handler)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBAddEvent, bot.MatchTypeExact, createEvent.Handler)
 	b.RegisterHandler(bot.HandlerTypeMessageText, empty, bot.MatchTypePrefix, addEventText.Handle)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBGetById, bot.MatchTypePrefix, getEventById.Handle)
