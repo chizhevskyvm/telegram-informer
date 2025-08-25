@@ -2,6 +2,7 @@ package deletealleventstoday
 
 import (
 	"context"
+
 	"telegram-informer/internal/bot/ui/texts"
 
 	"github.com/go-telegram/bot"
@@ -21,9 +22,14 @@ func NewHandle(eventService EventService) *Handle {
 }
 
 func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update == nil || update.CallbackQuery == nil || update.CallbackQuery.Message.Message == nil {
+		return
+	}
+
 	userID := int(update.CallbackQuery.From.ID)
-	chatID := update.CallbackQuery.Message.Message.Chat.ID
-	messageID := update.CallbackQuery.Message.Message.ID
+	msg := update.CallbackQuery.Message.Message
+	chatID := msg.Chat.ID
+	messageID := msg.ID
 
 	if err := h.eventService.DeleteEventFromToday(ctx, userID); err != nil {
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{

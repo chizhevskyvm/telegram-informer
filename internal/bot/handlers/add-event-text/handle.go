@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	eventsstate "telegram-informer/internal/bot/event-state"
 	"telegram-informer/internal/bot/ui/texts"
 	"telegram-informer/internal/infra/cache"
@@ -15,12 +16,14 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// Константы для хранения ключей и UI
 const (
-	titleValue = "title_value"
-	dateValue  = "date_value"
-	timeValue  = "time_value"
-	stateTTL   = 10 * time.Minute
+	cacheKeyTitleValue = "title_value"
+	cacheKeyDateValue  = "date_value"
+	cacheKeyTimeValue  = "time_value"
+
+	addEvent = "addEvent"
+
+	stateTTL = 10 * time.Minute
 )
 
 type Handle struct {
@@ -51,65 +54,113 @@ func (h *Handle) Handle(ctx context.Context, b *bot.Bot, update *models.Update) 
 	userID := update.Message.From.ID
 	chatID := update.Message.Chat.ID
 
-	state, err := h.cache.Get(eventsstate.GetUserStateKey(userID))
-	if err != nil && !errors.Is(err, redis.Nil) {
+	state, err := h.getUserState(userID)
+	if err != nil {
 		fmt.Println("Ошибка при получении состояния:", err)
 		return
 	}
 
-	if eventsstate.IsAddEventState(state, userID) {
+	if !eventsstate.IsAddEventState(state, userID) {
 		return
 	}
 
-	dataKey := eventsstate.GetUserStateDataKey("addEvent", strconv.FormatInt(userID, 10))
-	data, err := cache.GetTyped[map[string]string](h.cache, dataKey)
-	if err != nil {
-		data = map[string]string{}
-	}
+	dataKey, data := h.getUserData(userID, addEvent)
 
 	switch state {
 	case eventsstate.GetUserStageState(eventsstate.StateAddEventTitle, userID):
+		title := strings.TrimSpace(userInput)
+		if title == "" {
+			_, _ = b.SendMessage(ctx, &bot.SendMessageParams{ChatID: chatID, Text: texts.ErrTitleEmpty})
+			_, _ = b.SendMessage(ctx, &bot.SendMessageParams{ChatID: chatID, Text: texts.MsgAskTitle})
+			return
+		}
+
 		h.addEventTitleState(userID, userInput, data, dataKey)
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{ChatID: chatID, Text: texts.MsgAskDate})
 
 	case eventsstate.GetUserStageState(eventsstate.StateAddEventDate, userID):
-		h.addEventDateState(userID, userInput, data, dataKey)
+		dateStr := strings.TrimSpace(userInput)
+		if _, err := parseDateLocal(dateStr); err != nil {
+			_, _ = b.SendMessage(ctx, &bot.SendMessageParams{ChatID: chatID, Text: texts.ErrDateFormat})
+			_, _ = b.SendMessage(ctx, &bot.SendMessageParams{ChatID: chatID, Text: texts.MsgAskDate})
+			return
+		}
+		h.addEventDateState(userID, dateStr, data, dataKey)
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{ChatID: chatID, Text: texts.MsgAskTime})
 
 	case eventsstate.GetUserStageState(eventsstate.StateAddEventTime, userID):
-		h.addEventTimeState(userID, userInput, data, dataKey)
+		timeStr := strings.TrimSpace(userInput)
+		if _, err := parseTimeLocal(timeStr); err != nil {
+			_, _ = b.SendMessage(ctx, &bot.SendMessageParams{ChatID: chatID, Text: texts.ErrTimeFormat})
+			_, _ = b.SendMessage(ctx, &bot.SendMessageParams{ChatID: chatID, Text: texts.MsgAskTime})
+			return
+		}
+		h.addEventTimeState(userID, timeStr, data, dataKey)
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{ChatID: chatID, Text: texts.MsgConfirm})
 
 	case eventsstate.GetUserStageState(eventsstate.StateAddEventDone, userID):
-		h.addEventDoneState(ctx, userID, data, dataKey)
+		if err := h.addEventDoneState(ctx, userID, data, dataKey); err != nil {
+			_, _ = b.SendMessage(ctx, &bot.SendMessageParams{ChatID: chatID, Text: texts.ErrGeneric})
+			return
+		}
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{ChatID: chatID, Text: texts.MsgCreated})
+
+	default:
+		return
 	}
 }
 
+func parseDateLocal(s string) (time.Time, error) {
+	return time.ParseInLocation("2006-01-02", strings.TrimSpace(s), time.Local)
+}
+
+func parseTimeLocal(s string) (time.Time, error) {
+	return time.ParseInLocation("15:04", strings.TrimSpace(s), time.Local)
+}
+
+func (h *Handle) getUserData(userID int64, scenarioKey string) (string, map[string]string) {
+	dataKey := eventsstate.GetUserStateDataKey(scenarioKey, strconv.FormatInt(userID, 10))
+
+	data, err := cache.GetTyped[map[string]string](h.cache, dataKey)
+	if err != nil || data == nil {
+		data = map[string]string{}
+	}
+	return dataKey, data
+}
+
+func (h *Handle) getUserState(userID int64) (string, error) {
+	key := eventsstate.GetUserStateKey(userID)
+	state, err := h.cache.Get(key)
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return "", fmt.Errorf("get user state: %w", err)
+	}
+	return state, nil
+}
+
 func (h *Handle) addEventTitleState(userID int64, userInput string, data map[string]string, dataKey string) {
-	data[titleValue] = userInput
+	data[cacheKeyTitleValue] = userInput
 	_ = h.cache.Set(eventsstate.GetUserStateKey(userID), eventsstate.GetUserStageState(eventsstate.StateAddEventDate, userID), stateTTL)
 	_ = cache.SetTyped(h.cache, dataKey, data, stateTTL)
 }
 
 func (h *Handle) addEventDateState(userID int64, userInput string, data map[string]string, dataKey string) {
-	data[dateValue] = userInput
+	data[cacheKeyDateValue] = userInput
 	_ = h.cache.Set(eventsstate.GetUserStateKey(userID), eventsstate.GetUserStageState(eventsstate.StateAddEventTime, userID), stateTTL)
 	_ = cache.SetTyped(h.cache, dataKey, data, stateTTL)
 }
 
 func (h *Handle) addEventTimeState(userID int64, userInput string, data map[string]string, dataKey string) {
-	data[timeValue] = userInput
+	data[cacheKeyTimeValue] = userInput
 	_ = h.cache.Set(eventsstate.GetUserStateKey(userID), eventsstate.GetUserStageState(eventsstate.StateAddEventDone, userID), stateTTL)
 	_ = cache.SetTyped(h.cache, dataKey, data, stateTTL)
 }
 
-func (h *Handle) addEventDoneState(ctx context.Context, userID int64, data map[string]string, dataKey string) {
+func (h *Handle) addEventDoneState(ctx context.Context, userID int64, data map[string]string, dataKey string) error {
 	_ = h.cache.Delete(eventsstate.GetUserStateKey(userID))
 	_ = h.cache.Delete(dataKey)
 
-	dateParsed, _ := time.Parse("2006-01-02", data[dateValue])
-	timeParsed, _ := time.Parse("15:04", data[timeValue])
+	dateParsed, _ := time.Parse("2006-01-02", data[cacheKeyDateValue])
+	timeParsed, _ := time.Parse("15:04", data[cacheKeyTimeValue])
 
-	_ = h.eventService.AddEvent(ctx, int(userID), data[titleValue], dateParsed, timeParsed)
+	return h.eventService.AddEvent(ctx, int(userID), data[cacheKeyTitleValue], dateParsed, timeParsed)
 }

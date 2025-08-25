@@ -17,17 +17,29 @@ func NewHandle() *Handle {
 	return &Handle{}
 }
 
-func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	_, err := b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: update.Message.Chat.ID,
-		Text:   texts.BtnMenuTitle,
-		ReplyMarkup: &models.InlineKeyboardMarkup{
-			InlineKeyboard: [][]models.InlineKeyboardButton{
-				{{Text: texts.BtnAddEvent, CallbackData: handlers.CBAddEvent}},
-				{{Text: texts.BtnTodayEvents, CallbackData: handlers.CBTodayEvents}, {Text: texts.BtnAllEvents, CallbackData: handlers.CBAllEvents}},
-				{{Text: texts.BtnCancelAllTodayEvents, CallbackData: handlers.CBCancelAllTodayEvents}},
-			},
+var menuKeyboard = &models.InlineKeyboardMarkup{
+	InlineKeyboard: [][]models.InlineKeyboardButton{
+		{
+			{Text: texts.BtnAddEvent, CallbackData: handlers.CBAddEvent}},
+		{
+			{Text: texts.BtnTodayEvents, CallbackData: handlers.CBTodayEvents},
+			{Text: texts.BtnAllEvents, CallbackData: handlers.CBAllEvents},
 		},
+		{{Text: texts.BtnCancelAllTodayEvents, CallbackData: handlers.CBCancelAllTodayEvents}},
+	},
+}
+
+func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update == nil || update.Message == nil {
+		return
+	}
+
+	chatID := update.Message.Chat.ID
+
+	_, err := b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:      chatID,
+		Text:        texts.BtnMenuTitle,
+		ReplyMarkup: menuKeyboard,
 	})
 	if err != nil {
 		fmt.Printf("send message error: %v\n", err)

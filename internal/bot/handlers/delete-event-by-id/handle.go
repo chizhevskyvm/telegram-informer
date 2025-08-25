@@ -21,11 +21,23 @@ func NewHandle(eventService EventService) Handle {
 	return Handle{eventService: eventService}
 }
 
-func (h Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update) {
+func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update == nil || update.CallbackQuery == nil || update.CallbackQuery.Message.Message == nil {
+		return
+	}
+
 	userID := int(update.CallbackQuery.From.ID)
 	chatID := update.CallbackQuery.Message.Message.Chat.ID
 
-	id, _ := updatehelper.GetId(update)
+	id, err := updatehelper.GetId(update)
+	if err != nil {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   texts.MsgDeleteError, // безопасное сообщение
+		})
+		return
+	}
+
 	if err := h.eventService.DeleteEvent(ctx, userID, id); err != nil {
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,

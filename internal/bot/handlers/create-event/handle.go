@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	eventsstate "telegram-informer/internal/bot/event-state"
 	"telegram-informer/internal/bot/ui/texts"
 	"time"
@@ -41,15 +42,16 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 	userID := update.CallbackQuery.From.ID
 	chatID := update.CallbackQuery.Message.Message.Chat.ID
 
-	state, err := h.cache.Get(eventsstate.GetUserStateKey(userID))
-	if err != nil && !errors.Is(err, redis.Nil) {
-		fmt.Println("Ошибка при получении состояния:", err)
-		return
+	if _, err := h.cache.Get(eventsstate.GetUserStateKey(userID)); err != nil && !errors.Is(err, redis.Nil) {
+		fmt.Println("get state error:", err)
 	}
 
-	if eventsstate.IsAddEventState(state, userID) {
-		state = eventsstate.GetUserStageState(eventsstate.StateAddEventTitle, userID)
-		_ = h.cache.Set(eventsstate.GetUserStateKey(userID), state, stateTTL)
+	dataKey := eventsstate.GetUserStateDataKey("addEvent", strconv.FormatInt(userID, 10))
+	_ = h.cache.Delete(dataKey)
+
+	state := eventsstate.GetUserStageState(eventsstate.StateAddEventTitle, userID)
+	if err := h.cache.Set(eventsstate.GetUserStateKey(userID), state, stateTTL); err != nil {
+		fmt.Println("set state error:", err)
 	}
 
 	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{

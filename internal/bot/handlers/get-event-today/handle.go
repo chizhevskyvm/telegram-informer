@@ -28,7 +28,14 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 	chatID := update.CallbackQuery.Message.Message.Chat.ID
 
 	events, err := h.eventService.GetEventsTodayFromUser(ctx, userID)
-	if err != nil || len(events) == 0 {
+	if err != nil {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   texts.MsgNoEventsToday,
+		})
+		return
+	}
+	if len(events) == 0 {
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   texts.MsgNoEventsToday,
@@ -36,6 +43,15 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 		return
 	}
 
+	replyMarkup := buildEventsKeyboard(events)
+	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:      chatID,
+		Text:        texts.MsgEventsList,
+		ReplyMarkup: replyMarkup,
+	})
+}
+
+func buildEventsKeyboard(events []domain.Event) *models.InlineKeyboardMarkup {
 	buttons := make([][]models.InlineKeyboardButton, 0, len(events))
 	for _, e := range events {
 		label := fmt.Sprintf(texts.BtnEventFormat, e.Title, e.TimeToNotify.Format("15:04"))
@@ -45,12 +61,5 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 		}
 		buttons = append(buttons, []models.InlineKeyboardButton{button})
 	}
-
-	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: chatID,
-		Text:   texts.MsgEventsList,
-		ReplyMarkup: &models.InlineKeyboardMarkup{
-			InlineKeyboard: buttons,
-		},
-	})
+	return &models.InlineKeyboardMarkup{InlineKeyboard: buttons}
 }

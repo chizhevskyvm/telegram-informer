@@ -3,6 +3,7 @@ package geteventbyid
 import (
 	"context"
 	"fmt"
+
 	"telegram-informer/internal/bot/handlers"
 	"telegram-informer/internal/bot/ui/texts"
 	updatehelper "telegram-informer/internal/bot/update-helper"
@@ -21,15 +22,25 @@ type Handler struct {
 	eventService EventService
 }
 
-func NewHandle(eventService EventService) *Handler {
-	return &Handler{eventService: eventService}
-}
+func NewHandle(eventService EventService) *Handler { return &Handler{eventService: eventService} }
 
 func (h *Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update == nil || update.CallbackQuery == nil || update.CallbackQuery.Message.Message == nil {
+		return
+	}
+
 	userID := int(update.CallbackQuery.From.ID)
 	chatID := update.CallbackQuery.Message.Message.Chat.ID
 
-	id, _ := updatehelper.GetId(update)
+	id, err := updatehelper.GetId(update)
+	if err != nil {
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   texts.MsgEventNotFound,
+		})
+		return
+	}
+
 	event, err := h.eventService.GetEvent(ctx, userID, id)
 	if err != nil {
 		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
@@ -46,19 +57,25 @@ func (h *Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update)
 		event.TimeToNotify.Format("15:04"),
 	)
 
-	deleteButton := [][]models.InlineKeyboardButton{
-		{
-			{
-				Text:         texts.BtnDeleteEvent,
-				CallbackData: fmt.Sprintf("%s%d", handlers.CBDeleteById, event.ID),
-			},
-		},
-	}
+	replyMarkup := buildDeleteKeyboard(event.ID)
 
 	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:      chatID,
 		Text:        messageText,
 		ParseMode:   models.ParseModeHTML,
-		ReplyMarkup: &models.InlineKeyboardMarkup{InlineKeyboard: deleteButton},
+		ReplyMarkup: replyMarkup,
 	})
+}
+
+func buildDeleteKeyboard(eventID int) *models.InlineKeyboardMarkup {
+	return &models.InlineKeyboardMarkup{
+		InlineKeyboard: [][]models.InlineKeyboardButton{
+			{
+				{
+					Text:         texts.BtnDeleteEvent,
+					CallbackData: fmt.Sprintf("%s%d", handlers.CBDeleteById, eventID),
+				},
+			},
+		},
+	}
 }
