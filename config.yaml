@@ -1,8 +1,14 @@
 telegram:
   token: ""
+
 redis:
-  address: "localhost:6380"
+  address: "localhost:6379"
   password: ""
   db: 0
-db:
+
+data_base:
   connection: "postgres://admin:secret@localhost:5432/telegram_informer?sslmode=disable"
+
+nats:
+  url: "nats://nats:4222"
+  jet_stream: true

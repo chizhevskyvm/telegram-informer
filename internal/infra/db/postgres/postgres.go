@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+
+	// ВАЖНО: драйвер источника миграций из файловой системы
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func RunMigrations(sql *sql.DB) error {
@@ -37,8 +39,10 @@ func New(connStr string) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
+
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("ping db: %w", err)
 	}
+
 	return db, nil
 }

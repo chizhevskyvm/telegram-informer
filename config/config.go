@@ -8,10 +8,15 @@ import (
 
 type Config struct {
 	Telegram Telegram       `yaml:"telegram"`
-	Database DatabaseConfig `yaml:"db"`
+	Database DatabaseConfig `yaml:"data_base"`
 	Redis    RedisConfig    `yaml:"redis"`
+	Nats     Nats           `yaml:"nats"`
 }
 
+type Nats struct {
+	Url       string `yaml:"url"`
+	JetStream bool   `yaml:"jet_stream"`
+}
 type Telegram struct {
 	Token string `yaml:"token"`
 }
