@@ -1,13 +1,15 @@
 package handlers
 
+// CB - Call back
+// MTP - Match type prefix
 const (
-	Start = "/start"
-
-	CBAddEvent             = "add-event"
-	CBTodayEvents          = "today-events"
+	CBSetCreateEventState  = "add-event"
+	CBGetEventToday        = "today-events"
 	CBAllEvents            = "all-events"
-	CBCancelAllTodayEvents = "cancel-today"
+	CBDeleteAllEventsToday = "cancel-today"
+	CBGetEventById         = "get-by-id:"
+	CBDeleteEventById      = "delete-by-id:"
 
-	CBGetById    = "get-by-id:"
-	CBDeleteById = "delete-by-id:"
+	MTPStart    = "/start"
+	MTCAddEvent = "" //empty
 )

@@ -80,7 +80,7 @@ func buildDeleteKeyboard(eventID int) *models.InlineKeyboardMarkup {
 			{
 				{
 					Text:         texts.BtnDeleteEvent,
-					CallbackData: fmt.Sprintf("%s%d", handlers.CBDeleteById, eventID),
+					CallbackData: fmt.Sprintf("%s%d", handlers.CBDeleteEventById, eventID),
 				},
 			},
 		},

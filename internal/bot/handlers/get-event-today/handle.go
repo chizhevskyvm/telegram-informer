@@ -66,7 +66,7 @@ func buildEventsKeyboard(events []domain.Event) *models.InlineKeyboardMarkup {
 		label := fmt.Sprintf(texts.BtnEventFormat, e.Title, utils.FormatTime(e.TimeToNotify))
 		button := models.InlineKeyboardButton{
 			Text:         label,
-			CallbackData: fmt.Sprintf("%s%d", handlers.CBGetById, e.ID),
+			CallbackData: fmt.Sprintf("%s%d", handlers.CBGetEventById, e.ID),
 		}
 		buttons = append(buttons, []models.InlineKeyboardButton{button})
 	}
