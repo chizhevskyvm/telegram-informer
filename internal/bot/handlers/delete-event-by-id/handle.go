@@ -2,11 +2,11 @@ package deleteeventbyid
 
 import (
 	"context"
-	"telegram-informer/internal/bot/ui/texts"
-	updatehelper "telegram-informer/internal/bot/update-helper"
-
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+	"telegram-informer/common/utils"
+	"telegram-informer/internal/bot/handlers/update-helper"
+	"telegram-informer/internal/bot/ui/texts"
 )
 
 type EventService interface {
@@ -26,28 +26,26 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 		return
 	}
 
+	err := utils.AnswerOK(ctx, b, update)
+
 	userID := int(update.CallbackQuery.From.ID)
 	chatID := update.CallbackQuery.Message.Message.Chat.ID
 
 	id, err := updatehelper.GetId(update)
 	if err != nil {
-		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatID,
-			Text:   texts.MsgDeleteError, // безопасное сообщение
-		})
+		_ = utils.SendHTML(ctx, b, chatID, texts.MsgDeleteError)
 		return
 	}
 
-	if err := h.eventService.DeleteEvent(ctx, userID, id); err != nil {
-		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatID,
-			Text:   texts.MsgDeleteError,
-		})
+	if err = h.eventService.DeleteEvent(ctx, userID, id); err != nil {
+		err = utils.SendHTML(ctx, b, chatID, texts.MsgDeleteError)
 		return
 	}
 
-	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: chatID,
-		Text:   texts.MsgDeleteSuccess,
-	})
+	err = utils.SendHTML(ctx, b, chatID, texts.MsgDeleteSuccess)
+
+	if err != nil {
+		err = utils.Send(ctx, b, chatID, texts.ErrGeneric)
+		print(err) //logger
+	}
 }

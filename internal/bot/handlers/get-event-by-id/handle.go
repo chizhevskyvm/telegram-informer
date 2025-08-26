@@ -3,10 +3,11 @@ package geteventbyid
 import (
 	"context"
 	"fmt"
+	"telegram-informer/common/utils"
+	"telegram-informer/internal/bot/handlers/update-helper"
 
 	"telegram-informer/internal/bot/handlers"
 	"telegram-informer/internal/bot/ui/texts"
-	updatehelper "telegram-informer/internal/bot/update-helper"
 	"telegram-informer/internal/domain"
 
 	"github.com/go-telegram/bot"
@@ -29,24 +30,24 @@ func (h *Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update)
 		return
 	}
 
+	err := utils.AnswerOK(ctx, b, update)
+
 	userID := int(update.CallbackQuery.From.ID)
 	chatID := update.CallbackQuery.Message.Message.Chat.ID
 
 	id, err := updatehelper.GetId(update)
 	if err != nil {
-		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatID,
-			Text:   texts.MsgEventNotFound,
-		})
+		err = utils.SendHTML(ctx, b, chatID, texts.MsgEventNotFound)
+
+		fmt.Printf("error: %v\n", err)
 		return
 	}
 
 	event, err := h.eventService.GetEvent(ctx, userID, id)
 	if err != nil {
-		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatID,
-			Text:   texts.MsgEventNotFound,
-		})
+		err = utils.SendHTML(ctx, b, chatID, texts.MsgEventNotFound)
+
+		fmt.Printf("error: %v\n", err)
 		return
 	}
 
@@ -59,12 +60,16 @@ func (h *Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update)
 
 	replyMarkup := buildDeleteKeyboard(event.ID)
 
-	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:      chatID,
 		Text:        messageText,
 		ParseMode:   models.ParseModeHTML,
 		ReplyMarkup: replyMarkup,
 	})
+
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+	}
 }
 
 func buildDeleteKeyboard(eventID int) *models.InlineKeyboardMarkup {

@@ -10,6 +10,7 @@ import (
 	geteventbyid "telegram-informer/internal/bot/handlers/get-event-by-id"
 	geteventtoday "telegram-informer/internal/bot/handlers/get-event-today"
 	mainmenu "telegram-informer/internal/bot/handlers/main_menu"
+	"telegram-informer/internal/bot/state"
 	"telegram-informer/internal/domain"
 	"time"
 
@@ -35,19 +36,24 @@ type Cache interface {
 }
 
 func RegisterHandlers(b *bot.Bot, storage StorageService, cache Cache) {
+	stateStore := state.NewStore(cache)
+
 	getEventById := geteventbyid.NewHandle(storage)
-	addEventText := addeventtext.NewHandle(storage, cache)
+	addEventText := addeventtext.NewHandle(storage, stateStore)
 	mainMenu := mainmenu.NewHandle()
-	createEvent := createevent.NewHandle(cache)
+	createEvent := createevent.NewHandle(stateStore)
 	deleteEventById := deleteeventbyid.NewHandle(storage)
 	getEventToday := geteventtoday.NewHandle(storage)
 	deleteAllEventsToday := deletealleventstoday.NewHandle(storage)
 
-	b.RegisterHandler(bot.HandlerTypeMessageText, events.Start, bot.MatchTypeExact, mainMenu.Handler)
+	b.RegisterHandler(bot.HandlerTypeMessageText, events.Start, bot.MatchTypePrefix, mainMenu.Handler)
+
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBAddEvent, bot.MatchTypeExact, createEvent.Handler)
-	b.RegisterHandler(bot.HandlerTypeMessageText, empty, bot.MatchTypePrefix, addEventText.Handle)
-	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBGetById, bot.MatchTypePrefix, getEventById.Handle)
-	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBDeleteById, bot.MatchTypePrefix, deleteEventById.Handler)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBTodayEvents, bot.MatchTypeExact, getEventToday.Handler)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBCancelAllTodayEvents, bot.MatchTypeExact, deleteAllEventsToday.Handler)
+
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBGetById, bot.MatchTypePrefix, getEventById.Handle)
+	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBDeleteById, bot.MatchTypePrefix, deleteEventById.Handler)
+
+	b.RegisterHandler(bot.HandlerTypeMessageText, empty, bot.MatchTypePrefix, addEventText.Handle)
 }

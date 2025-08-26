@@ -6,8 +6,6 @@ const (
 	CBAddEvent             = "add-event"
 	CBTodayEvents          = "today-events"
 	CBAllEvents            = "all-events"
-	CBEditEvent            = "edit-event"
-	CBDeleteEvent          = "delete-event"
 	CBCancelAllTodayEvents = "cancel-today"
 
 	CBGetById    = "get-by-id:"

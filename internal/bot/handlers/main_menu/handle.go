@@ -41,7 +41,8 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 		Text:        texts.BtnMenuTitle,
 		ReplyMarkup: menuKeyboard,
 	})
+
 	if err != nil {
-		fmt.Printf("send message error: %v\n", err)
+		fmt.Printf("error: %v\n", err)
 	}
 }

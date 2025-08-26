@@ -41,5 +41,7 @@ func Run(ctx context.Context) error {
 
 	bot.RegisterHandlers(b, eventRepository, redisCache)
 
+	b.Start(ctx)
+
 	return nil
 }

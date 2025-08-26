@@ -3,6 +3,7 @@ package deletealleventstoday
 import (
 	"context"
 
+	"telegram-informer/common/utils"
 	"telegram-informer/internal/bot/ui/texts"
 
 	"github.com/go-telegram/bot"
@@ -26,27 +27,29 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 		return
 	}
 
+	err := utils.AnswerOK(ctx, b, update)
+
 	userID := int(update.CallbackQuery.From.ID)
 	msg := update.CallbackQuery.Message.Message
 	chatID := msg.Chat.ID
 	messageID := msg.ID
 
-	if err := h.eventService.DeleteEventFromToday(ctx, userID); err != nil {
-		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: chatID,
-			Text:   texts.MsgDeleteAllError,
-		})
+	if err = h.eventService.DeleteEventFromToday(ctx, userID); err != nil {
+		_ = utils.SendHTML(ctx, b, chatID, texts.MsgDeleteAllError)
 		return
 	}
 
-	_, _ = b.EditMessageReplyMarkup(ctx, &bot.EditMessageReplyMarkupParams{
+	empty := &models.InlineKeyboardMarkup{InlineKeyboard: make([][]models.InlineKeyboardButton, 0)}
+	_, err = b.EditMessageReplyMarkup(ctx, &bot.EditMessageReplyMarkupParams{
 		ChatID:      chatID,
 		MessageID:   messageID,
-		ReplyMarkup: &models.InlineKeyboardMarkup{InlineKeyboard: [][]models.InlineKeyboardButton{}},
-	})
+		ReplyMarkup: empty},
+	)
 
-	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: chatID,
-		Text:   texts.MsgDeleteAllSuccess,
-	})
+	err = utils.SendHTML(ctx, b, chatID, texts.MsgDeleteAllSuccess)
+
+	if err != nil {
+		err = utils.Send(ctx, b, chatID, texts.ErrGeneric)
+		print(err) //logger
+	}
 }
