@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"telegram-informer/common/utils"
-	stateh "telegram-informer/internal/bot/state"
 	"telegram-informer/internal/bot/ui/texts"
 	"telegram-informer/internal/domain"
 
@@ -31,7 +30,7 @@ func (h *Handle) handleDone(ctx context.Context, b *bot.Bot, chatID int64, userI
 			err = SendEventCreatedDetails(ctx, b, chatID, ed)
 		}
 	case isNo(answer):
-		err = h.stateStore.SetState(userID, stateh.CreateEventState(userID))
+		err = h.stateStore.SetCreateEventState(userID)
 		err = utils.SendHTML(ctx, b, chatID, texts.MsgAskTitle)
 	default:
 		err = utils.SendHTML(ctx, b, chatID, texts.ErrYesOrNo)

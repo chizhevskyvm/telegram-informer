@@ -31,7 +31,7 @@ func DataKey(prefix, value string) string {
 	return fmt.Sprintf(userStateKeyWithData, prefix, value)
 }
 
-func CreateEventState(userID int64) State { return State(StageKey(addEventTitle, userID)) }
+func CreateEventState(userID int64) State { return State(StageKey(AddEvent, userID)) }
 
 func AddEventTitleState(userID int64) State { return State(StageKey(addEventTitle, userID)) }
 func AddEventDateState(userID int64) State  { return State(StageKey(addEventDate, userID)) }

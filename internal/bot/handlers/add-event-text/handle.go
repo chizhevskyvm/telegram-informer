@@ -45,7 +45,7 @@ func (h *Handle) Handle(ctx context.Context, b *bot.Bot, update *models.Update) 
 	}
 
 	if state == stateh.CreateEventState(userID) {
-		err = h.stateStore.SetState(userID, stateh.CreateEventState(userID))
+		err = h.stateStore.SetEventAddTitleState(userID)
 	}
 
 	switch state {

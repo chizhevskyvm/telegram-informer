@@ -28,7 +28,7 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 
 	err := h.state.ClearEventData(userID)
 
-	err = h.state.SetState(userID, stateh.CreateEventState(userID))
+	err = h.state.SetCreateEventState(chatID)
 
 	err = utils.SendHTML(ctx, b, chatID, texts.MsgAskTitle)
 

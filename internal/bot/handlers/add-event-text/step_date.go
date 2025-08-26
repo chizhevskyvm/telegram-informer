@@ -5,7 +5,6 @@ import (
 	"github.com/go-telegram/bot"
 	"strings"
 	"telegram-informer/common/utils"
-	stateh "telegram-informer/internal/bot/state"
 	"telegram-informer/internal/bot/ui/texts"
 )
 
@@ -28,7 +27,7 @@ func (h *Handle) handleDate(
 	eventData.SetDate(date)
 
 	err = h.stateStore.SetAddEventData(userID, eventData)
-	err = h.stateStore.SetState(userID, stateh.AddEventTimeState(userID))
+	err = h.stateStore.SetEventAddTimeState(userID)
 
 	err = utils.SendHTML(ctx, b, chatID, texts.MsgAskTime)
 
