@@ -23,7 +23,7 @@ func NewHandle(eventService EventService) Handle {
 }
 
 func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	if update == nil || update.CallbackQuery == nil || update.CallbackQuery.Message.Message == nil {
+	if botcommon.BodyIsNil(update) {
 		return
 	}
 

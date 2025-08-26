@@ -39,7 +39,7 @@ func (h *Handle) Handle(ctx context.Context, b *bot.Bot, update *models.Update) 
 		fmt.Println("Ошибка при получении состояния:", err)
 		return
 	}
-	if !stateh.IsAddEventState(state, userID) {
+	if !(stateh.IsAddEventState(state, userID) || stateh.IsCreateEventState(state, userID)) {
 		return
 	}
 

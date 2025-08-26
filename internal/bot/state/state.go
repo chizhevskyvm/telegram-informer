@@ -38,6 +38,10 @@ func AddEventDateState(userID int64) State  { return State(StageKey(addEventDate
 func AddEventTimeState(userID int64) State  { return State(StageKey(addEventTime, userID)) }
 func AddEventDoneState(userID int64) State  { return State(StageKey(addEventDone, userID)) }
 
+func IsCreateEventState(stateKey State, userID int64) bool {
+	return stateKey == CreateEventState(userID)
+}
+
 func IsAddEventState(stateKey State, userID int64) bool {
 	return stateKey == AddEventTitleState(userID) ||
 		stateKey == AddEventDateState(userID) ||

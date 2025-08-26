@@ -23,18 +23,16 @@ func NewHandle(eventService EventService) *Handle {
 }
 
 func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	if update == nil || update.CallbackQuery == nil || update.CallbackQuery.Message.Message == nil {
+	if botcommon.BodyIsNil(update) {
 		return
 	}
 
 	err := botcommon.AnswerOK(ctx, b, update)
 
-	userID := int(update.CallbackQuery.From.ID)
-	msg := update.CallbackQuery.Message.Message
-	chatID := msg.Chat.ID
-	messageID := msg.ID
+	userID := botcommon.GetUserID(update)
+	chatID := botcommon.GetChatID(update)
 
-	if err = h.eventService.DeleteEventFromToday(ctx, userID); err != nil {
+	if err = h.eventService.DeleteEventFromToday(ctx, int(userID)); err != nil {
 		_ = botcommon.SendHTML(ctx, b, chatID, texts.MsgDeleteAllError)
 		return
 	}
@@ -42,7 +40,7 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 	empty := &models.InlineKeyboardMarkup{InlineKeyboard: make([][]models.InlineKeyboardButton, 0)}
 	_, err = b.EditMessageReplyMarkup(ctx, &bot.EditMessageReplyMarkupParams{
 		ChatID:      chatID,
-		MessageID:   messageID,
+		MessageID:   update.CallbackQuery.Message.Message.ID,
 		ReplyMarkup: empty},
 	)
 

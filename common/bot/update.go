@@ -2,10 +2,6 @@ package bot
 
 import (
 	"context"
-	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
@@ -22,19 +18,8 @@ func AnswerOK(ctx context.Context, b *bot.Bot, update *models.Update) error {
 	return err
 }
 
-func GetId(update *models.Update) (int, error) {
-	rawID := update.CallbackQuery.Data
-	parts := strings.Split(rawID, ":")
-	if len(parts) != 2 {
-		return 0, fmt.Errorf(rawID)
-	}
-
-	id, err := strconv.Atoi(parts[1])
-	if err != nil {
-		return 0, fmt.Errorf(rawID)
-	}
-
-	return id, nil
+func BodyIsNil(update *models.Update) bool {
+	return update == nil || update.CallbackQuery == nil || update.CallbackQuery.Message.Message == nil
 }
 
 func GetUserID(update *models.Update) int64 {

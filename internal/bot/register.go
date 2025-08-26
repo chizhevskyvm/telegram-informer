@@ -49,6 +49,7 @@ func RegisterHandlers(b *bot.Bot, storage StorageService, cache Cache) {
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBSetCreateEventState, bot.MatchTypeExact, createEvent.Handler)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBGetEventToday, bot.MatchTypeExact, getEventToday.Handler)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBDeleteAllEventsToday, bot.MatchTypeExact, deleteAllEventsToday.Handler)
+	//TODO Get all events
 
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBGetEventById, bot.MatchTypePrefix, getEventById.Handle)
 	b.RegisterHandler(bot.HandlerTypeCallbackQueryData, events.CBDeleteEventById, bot.MatchTypePrefix, deleteEventById.Handler)

@@ -28,7 +28,7 @@ type Handler struct {
 func NewHandle(eventService EventService) *Handler { return &Handler{eventService: eventService} }
 
 func (h *Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) {
-	if update == nil || update.CallbackQuery == nil || update.CallbackQuery.Message.Message == nil {
+	if botcommon.BodyIsNil(update) {
 		return
 	}
 
