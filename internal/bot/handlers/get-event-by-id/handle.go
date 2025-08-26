@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"telegram-informer/common/utils"
-	"telegram-informer/internal/bot/handlers/update-helper"
+	updatehelper "telegram-informer/internal/bot/handlers/update-helper"
 
 	"telegram-informer/internal/bot/handlers"
 	"telegram-informer/internal/bot/ui/texts"

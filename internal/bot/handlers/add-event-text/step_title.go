@@ -2,10 +2,11 @@ package addeventtext
 
 import (
 	"context"
-	"github.com/go-telegram/bot"
 	"strings"
 	"telegram-informer/common/utils"
 	"telegram-informer/internal/bot/ui/texts"
+
+	"github.com/go-telegram/bot"
 )
 
 func (h *Handle) handleTitle(ctx context.Context, b *bot.Bot, chatID int64, userID int64, userInput string) error {

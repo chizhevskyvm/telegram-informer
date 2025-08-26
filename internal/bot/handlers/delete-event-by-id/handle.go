@@ -2,11 +2,12 @@ package deleteeventbyid
 
 import (
 	"context"
+	"telegram-informer/common/utils"
+	updatehelper "telegram-informer/internal/bot/handlers/update-helper"
+	"telegram-informer/internal/bot/ui/texts"
+
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
-	"telegram-informer/common/utils"
-	"telegram-informer/internal/bot/handlers/update-helper"
-	"telegram-informer/internal/bot/ui/texts"
 )
 
 type EventService interface {

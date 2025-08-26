@@ -2,10 +2,11 @@ package addeventtext
 
 import (
 	"context"
-	"github.com/go-telegram/bot"
 	"strings"
 	"telegram-informer/common/utils"
 	"telegram-informer/internal/bot/ui/texts"
+
+	"github.com/go-telegram/bot"
 )
 
 func (h *Handle) handleDate(
