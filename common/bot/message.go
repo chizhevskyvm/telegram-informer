@@ -1,4 +1,4 @@
-package utils
+package bot
 
 import (
 	"context"
@@ -21,17 +21,5 @@ func SendHTML(ctx context.Context, b *bot.Bot, chatID int64, text string) error 
 		Text:      text,
 		ParseMode: models.ParseModeHTML,
 	})
-	return err
-}
-
-func AnswerOK(ctx context.Context, b *bot.Bot, update *models.Update) error {
-	if update == nil || update.CallbackQuery == nil {
-		return nil
-	}
-
-	_, err := b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
-		CallbackQueryID: update.CallbackQuery.ID,
-	})
-
 	return err
 }

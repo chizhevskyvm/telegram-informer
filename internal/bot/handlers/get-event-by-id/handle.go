@@ -3,14 +3,16 @@ package geteventbyid
 import (
 	"context"
 	"fmt"
+	botcommon "telegram-informer/common/bot"
 	"telegram-informer/common/utils"
 	updatehelper "telegram-informer/internal/bot/handlers/update-helper"
+
+	"github.com/go-telegram/bot"
 
 	"telegram-informer/internal/bot/handlers"
 	"telegram-informer/internal/bot/ui/texts"
 	"telegram-informer/internal/domain"
 
-	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
 
@@ -30,14 +32,14 @@ func (h *Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update)
 		return
 	}
 
-	err := utils.AnswerOK(ctx, b, update)
+	err := botcommon.AnswerOK(ctx, b, update)
 
-	userID := int(update.CallbackQuery.From.ID)
-	chatID := update.CallbackQuery.Message.Message.Chat.ID
+	userID := int(botcommon.GetUserID(update))
+	chatID := botcommon.GetChatID(update)
 
-	id, err := updatehelper.GetId(update)
+	id, err := updatehelper.ParseCallbackID(update)
 	if err != nil {
-		err = utils.SendHTML(ctx, b, chatID, texts.MsgEventNotFound)
+		err = botcommon.SendHTML(ctx, b, chatID, texts.MsgEventNotFound)
 
 		fmt.Printf("error: %v\n", err)
 		return
@@ -45,7 +47,7 @@ func (h *Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update)
 
 	event, err := h.eventService.GetEvent(ctx, userID, id)
 	if err != nil {
-		err = utils.SendHTML(ctx, b, chatID, texts.MsgEventNotFound)
+		err = botcommon.SendHTML(ctx, b, chatID, texts.MsgEventNotFound)
 
 		fmt.Printf("error: %v\n", err)
 		return
@@ -54,8 +56,8 @@ func (h *Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update)
 	messageText := fmt.Sprintf(
 		texts.MsgEventDetails,
 		event.Title,
-		event.Notification.Format("02.01.2006"),
-		event.TimeToNotify.Format("15:04"),
+		utils.FormatDate(event.Notification),
+		utils.FormatTime(event.TimeToNotify),
 	)
 
 	replyMarkup := buildDeleteKeyboard(event.ID)

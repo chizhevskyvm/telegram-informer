@@ -3,8 +3,11 @@ package addeventtext
 import (
 	"context"
 	"strings"
+	botcommon "telegram-informer/common/bot"
 	"telegram-informer/common/utils"
 	"telegram-informer/internal/bot/ui/texts"
+
+	"github.com/go-telegram/bot/models"
 
 	"github.com/go-telegram/bot"
 )
@@ -12,15 +15,16 @@ import (
 func (h *Handle) handleTime(
 	ctx context.Context,
 	b *bot.Bot,
-	chatID int64,
-	userID int64,
-	userInput string,
+	update *models.Update,
 ) error {
 	var err error
 
-	date, parseErr := utils.ParseTime(strings.TrimSpace(userInput))
+	userID := botcommon.GetUserID(update)
+	chatID := botcommon.GetChatID(update)
+
+	date, parseErr := utils.ParseTime(strings.TrimSpace(update.Message.Text))
 	if parseErr != nil {
-		err = utils.SendHTML(ctx, b, chatID, texts.ErrTimeFormat)
+		err = botcommon.SendHTML(ctx, b, chatID, texts.ErrTimeFormat)
 		return err
 	}
 
@@ -30,7 +34,7 @@ func (h *Handle) handleTime(
 	err = h.stateStore.SetAddEventData(userID, eventData)
 	err = h.stateStore.SetDoneState(userID)
 
-	err = utils.SendHTML(ctx, b, chatID, texts.MsgConfirm)
+	err = botcommon.SendHTML(ctx, b, chatID, texts.MsgConfirm)
 
 	return err
 }

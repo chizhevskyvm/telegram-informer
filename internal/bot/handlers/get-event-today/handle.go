@@ -3,6 +3,7 @@ package geteventtoday
 import (
 	"context"
 	"fmt"
+	botcommon "telegram-informer/common/bot"
 	"telegram-informer/common/utils"
 	"telegram-informer/internal/bot/handlers"
 	"telegram-informer/internal/bot/ui/texts"
@@ -29,19 +30,19 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 		return
 	}
 
-	err := utils.AnswerOK(ctx, b, update)
+	err := botcommon.AnswerOK(ctx, b, update)
 
-	userID := int(update.CallbackQuery.From.ID)
-	chatID := update.CallbackQuery.Message.Message.Chat.ID
+	userID := botcommon.GetUserID(update)
+	chatID := botcommon.GetChatID(update)
 
-	events, err := h.eventService.GetEventsTodayFromUser(ctx, userID)
+	events, err := h.eventService.GetEventsTodayFromUser(ctx, int(userID))
 	if err != nil {
-		err = utils.SendHTML(ctx, b, chatID, texts.MsgNoEventsToday)
+		err = botcommon.SendHTML(ctx, b, chatID, texts.MsgNoEventsToday)
 		return
 	}
 
 	if len(events) == 0 {
-		err = utils.SendHTML(ctx, b, chatID, texts.MsgNoEventsToday)
+		err = botcommon.SendHTML(ctx, b, chatID, texts.MsgNoEventsToday)
 		return
 	}
 
@@ -49,12 +50,12 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:      chatID,
 		Text:        texts.MsgEventsList,
-		ParseMode:   models.ParseModeHTML, // у тебя тексты с HTML
+		ParseMode:   models.ParseModeHTML,
 		ReplyMarkup: replyMarkup,
 	})
 
 	if err != nil {
-		err = utils.Send(ctx, b, chatID, texts.ErrGeneric)
+		err = botcommon.Send(ctx, b, chatID, texts.ErrGeneric)
 		fmt.Printf("error: %v\n", err)
 	}
 }
@@ -62,7 +63,7 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 func buildEventsKeyboard(events []domain.Event) *models.InlineKeyboardMarkup {
 	buttons := make([][]models.InlineKeyboardButton, 0, len(events))
 	for _, e := range events {
-		label := fmt.Sprintf(texts.BtnEventFormat, e.Title, e.TimeToNotify.Format("15:04"))
+		label := fmt.Sprintf(texts.BtnEventFormat, e.Title, utils.FormatTime(e.TimeToNotify))
 		button := models.InlineKeyboardButton{
 			Text:         label,
 			CallbackData: fmt.Sprintf("%s%d", handlers.CBGetById, e.ID),

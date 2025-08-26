@@ -4,15 +4,21 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	botcommon "telegram-informer/common/bot"
 	"telegram-informer/common/utils"
 	"telegram-informer/internal/bot/ui/texts"
 	"telegram-informer/internal/domain"
 
+	"github.com/go-telegram/bot/models"
+
 	"github.com/go-telegram/bot"
 )
 
-func (h *Handle) handleDone(ctx context.Context, b *bot.Bot, chatID int64, userID int64, userInput string) error {
-	answer := strings.ToLower(strings.TrimSpace(userInput))
+func (h *Handle) handleDone(ctx context.Context, b *bot.Bot, update *models.Update) error {
+	userID := botcommon.GetUserID(update)
+	chatID := botcommon.GetChatID(update)
+
+	answer := strings.ToLower(strings.TrimSpace(update.Message.Text))
 
 	var err error
 
@@ -20,7 +26,7 @@ func (h *Handle) handleDone(ctx context.Context, b *bot.Bot, chatID int64, userI
 	case isYes(answer):
 		ed, _ := h.stateStore.GetAddEventData(userID)
 		if err = h.addEventDone(ctx, userID, ed); err != nil {
-			err = utils.SendHTML(ctx, b, chatID, texts.ErrGeneric)
+			err = botcommon.SendHTML(ctx, b, chatID, texts.ErrGeneric)
 			return nil
 		}
 		err = h.stateStore.ClearEventData(userID)
@@ -31,10 +37,10 @@ func (h *Handle) handleDone(ctx context.Context, b *bot.Bot, chatID int64, userI
 		}
 	case isNo(answer):
 		err = h.stateStore.SetCreateEventState(userID)
-		err = utils.SendHTML(ctx, b, chatID, texts.MsgAskTitle)
+		err = botcommon.SendHTML(ctx, b, chatID, texts.MsgAskTitle)
 	default:
-		err = utils.SendHTML(ctx, b, chatID, texts.ErrYesOrNo)
-		err = utils.SendHTML(ctx, b, chatID, texts.MsgConfirm)
+		err = botcommon.SendHTML(ctx, b, chatID, texts.ErrYesOrNo)
+		err = botcommon.SendHTML(ctx, b, chatID, texts.MsgConfirm)
 	}
 
 	return err
@@ -55,7 +61,7 @@ func SendEventCreatedDetails(ctx context.Context, b *bot.Bot, chatID int64, ed *
 		utils.FormatDate(date),
 		utils.FormatTime(time),
 	)
-	return utils.SendHTML(ctx, b, chatID, msg)
+	return botcommon.SendHTML(ctx, b, chatID, msg)
 }
 
 func isYes(s string) bool {

@@ -4,12 +4,12 @@ import (
 	"context"
 	events "telegram-informer/internal/bot/handlers"
 	addeventtext "telegram-informer/internal/bot/handlers/add-event-text"
-	createevent "telegram-informer/internal/bot/handlers/create-event"
 	deletealleventstoday "telegram-informer/internal/bot/handlers/delete-all-events-today"
 	deleteeventbyid "telegram-informer/internal/bot/handlers/delete-event-by-id"
 	geteventbyid "telegram-informer/internal/bot/handlers/get-event-by-id"
 	geteventtoday "telegram-informer/internal/bot/handlers/get-event-today"
 	mainmenu "telegram-informer/internal/bot/handlers/main_menu"
+	setcreateeventstate "telegram-informer/internal/bot/handlers/set-create-event-state"
 	"telegram-informer/internal/bot/state"
 	"telegram-informer/internal/domain"
 	"time"
@@ -41,7 +41,7 @@ func RegisterHandlers(b *bot.Bot, storage StorageService, cache Cache) {
 	getEventById := geteventbyid.NewHandle(storage)
 	addEventText := addeventtext.NewHandle(storage, stateStore)
 	mainMenu := mainmenu.NewHandle()
-	createEvent := createevent.NewHandle(stateStore)
+	createEvent := setcreateeventstate.NewHandle(stateStore)
 	deleteEventById := deleteeventbyid.NewHandle(storage)
 	getEventToday := geteventtoday.NewHandle(storage)
 	deleteAllEventsToday := deletealleventstoday.NewHandle(storage)

@@ -1,8 +1,8 @@
-package createevent
+package setcreateeventstate
 
 import (
 	"context"
-	"telegram-informer/common/utils"
+	botcommon "telegram-informer/common/bot"
 	stateh "telegram-informer/internal/bot/state"
 	"telegram-informer/internal/bot/ui/texts"
 
@@ -30,10 +30,10 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 
 	err = h.state.SetCreateEventState(chatID)
 
-	err = utils.SendHTML(ctx, b, chatID, texts.MsgAskTitle)
+	err = botcommon.SendHTML(ctx, b, chatID, texts.MsgAskTitle)
 
 	if err != nil {
-		err = utils.Send(ctx, b, chatID, texts.ErrGeneric)
+		err = botcommon.Send(ctx, b, chatID, texts.ErrGeneric)
 		print(err) //logger
 	}
 }

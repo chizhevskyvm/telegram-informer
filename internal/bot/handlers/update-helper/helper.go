@@ -8,8 +8,8 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
-func GetId(update *models.Update) (int, error) {
-	rawID := update.CallbackQuery.Data // "get-by-id:13"
+func ParseCallbackID(update *models.Update) (int, error) {
+	rawID := update.CallbackQuery.Data
 	parts := strings.Split(rawID, ":")
 	if len(parts) != 2 {
 		return 0, fmt.Errorf(rawID)

@@ -2,8 +2,8 @@ package deletealleventstoday
 
 import (
 	"context"
+	botcommon "telegram-informer/common/bot"
 
-	"telegram-informer/common/utils"
 	"telegram-informer/internal/bot/ui/texts"
 
 	"github.com/go-telegram/bot"
@@ -27,7 +27,7 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 		return
 	}
 
-	err := utils.AnswerOK(ctx, b, update)
+	err := botcommon.AnswerOK(ctx, b, update)
 
 	userID := int(update.CallbackQuery.From.ID)
 	msg := update.CallbackQuery.Message.Message
@@ -35,7 +35,7 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 	messageID := msg.ID
 
 	if err = h.eventService.DeleteEventFromToday(ctx, userID); err != nil {
-		_ = utils.SendHTML(ctx, b, chatID, texts.MsgDeleteAllError)
+		_ = botcommon.SendHTML(ctx, b, chatID, texts.MsgDeleteAllError)
 		return
 	}
 
@@ -46,10 +46,10 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 		ReplyMarkup: empty},
 	)
 
-	err = utils.SendHTML(ctx, b, chatID, texts.MsgDeleteAllSuccess)
+	err = botcommon.SendHTML(ctx, b, chatID, texts.MsgDeleteAllSuccess)
 
 	if err != nil {
-		err = utils.Send(ctx, b, chatID, texts.ErrGeneric)
+		err = botcommon.Send(ctx, b, chatID, texts.ErrGeneric)
 		print(err) //logger
 	}
 }

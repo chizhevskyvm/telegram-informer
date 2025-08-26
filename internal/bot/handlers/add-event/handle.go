@@ -3,7 +3,7 @@ package addeventtext
 import (
 	"context"
 	"fmt"
-	"telegram-informer/common/utils"
+	botcommon "telegram-informer/common/bot"
 	"telegram-informer/internal/bot/ui/texts"
 
 	"github.com/go-telegram/bot"
@@ -31,9 +31,8 @@ func (h *Handle) Handle(ctx context.Context, b *bot.Bot, update *models.Update) 
 		return
 	}
 
-	userInput := update.Message.Text
-	userID := update.Message.From.ID
-	chatID := update.Message.Chat.ID
+	userID := botcommon.GetUserID(update)
+	chatID := botcommon.GetChatID(update)
 
 	state, err := h.stateStore.GetState(userID)
 	if err != nil {
@@ -50,19 +49,19 @@ func (h *Handle) Handle(ctx context.Context, b *bot.Bot, update *models.Update) 
 
 	switch state {
 	case stateh.AddEventTitleState(userID):
-		err = h.handleTitle(ctx, b, chatID, userID, userInput)
+		err = h.handleTitle(ctx, b, update)
 	case stateh.AddEventDateState(userID):
-		err = h.handleDate(ctx, b, chatID, userID, userInput)
+		err = h.handleDate(ctx, b, update)
 	case stateh.AddEventTimeState(userID):
-		err = h.handleTime(ctx, b, chatID, userID, userInput)
+		err = h.handleTime(ctx, b, update)
 	case stateh.AddEventDoneState(userID):
-		err = h.handleDone(ctx, b, chatID, userID, userInput)
+		err = h.handleDone(ctx, b, update)
 	default:
 		return
 	}
 
 	if err != nil {
-		err = utils.Send(ctx, b, chatID, texts.ErrGeneric)
+		err = botcommon.Send(ctx, b, chatID, texts.ErrGeneric)
 		print(err) //logger
 	}
 }
