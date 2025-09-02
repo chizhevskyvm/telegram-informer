@@ -22,14 +22,14 @@ func (h *Handle) handleDate(
 	userID := botcommon.GetUserID(update)
 	chatID := botcommon.GetChatID(update)
 
-	date, parseErr := utils.ParseDateLocal(strings.TrimSpace(update.Message.Text))
+	date, parseErr := utils.ParseDateTz(strings.TrimSpace(update.Message.Text), "Europe/Moscow")
 	if parseErr != nil {
 		err = botcommon.SendHTML(ctx, b, chatID, texts.ErrDateFormat)
 		return err
 	}
 
 	eventData, _ := h.stateStore.GetAddEventData(userID)
-	eventData.SetDate(date)
+	eventData.SetDate(date, "Europe/Moscow")
 
 	err = h.stateStore.SetAddEventData(userID, eventData)
 	err = h.stateStore.SetEventAddTimeState(userID)

@@ -33,16 +33,14 @@ func (h *Handle) Handler(ctx context.Context, b *bot.Bot, update *models.Update)
 	chatID := botcommon.GetChatID(update)
 
 	if err = h.eventService.DeleteEventFromToday(ctx, int(userID)); err != nil {
-		_ = botcommon.SendHTML(ctx, b, chatID, texts.MsgDeleteAllError)
+		err = botcommon.SendHTML(ctx, b, chatID, texts.MsgDeleteAllError)
+
+		if err != nil {
+			print(err) //logger
+		}
+
 		return
 	}
-
-	empty := &models.InlineKeyboardMarkup{InlineKeyboard: make([][]models.InlineKeyboardButton, 0)}
-	_, err = b.EditMessageReplyMarkup(ctx, &bot.EditMessageReplyMarkupParams{
-		ChatID:      chatID,
-		MessageID:   update.CallbackQuery.Message.Message.ID,
-		ReplyMarkup: empty},
-	)
 
 	err = botcommon.SendHTML(ctx, b, chatID, texts.MsgDeleteAllSuccess)
 

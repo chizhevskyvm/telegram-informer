@@ -34,10 +34,21 @@ func (e *EventData) SetTitle(title string) {
 }
 
 func (e *EventData) GetDate() (time.Time, error) {
-	return utils.ParseDateLocal(e.data[keyDate])
+	return utils.FromTimeZone(e.data[keyDate])
 }
-func (e *EventData) SetDate(time time.Time) {
-	e.data[keyDate] = utils.FormatDate(time)
+func (e *EventData) SetDate(t time.Time, userTZ string) {
+	loc, err := time.LoadLocation(userTZ)
+	if err != nil {
+		loc = time.UTC
+	}
+
+	localTime := time.Date(
+		t.Year(), t.Month(), t.Day(),
+		t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), loc,
+	)
+	utcTime := localTime.UTC()
+
+	e.data[keyDate] = utils.FormatDate(utcTime)
 }
 
 func (e *EventData) SetTime(time time.Time) {

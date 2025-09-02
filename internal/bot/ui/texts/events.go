@@ -11,6 +11,8 @@ const (
 		"📅 <i>%s</i>\n" + // дата
 		"⏰ <i>%s</i>\n\n" + // время
 		"Мы напомним вам в нужный момент 😉"
+	MsgNoEventsActual   = "📭 <b>У вас нет событий!</b>\nМожно расслабиться и заняться любимыми делами 😎"
+	MsgEventsActualList = "📅 <b>Ваши события:</b>"
 	MsgNoEventsToday    = "📭 <b>Сегодня у вас нет событий!</b>\nМожно расслабиться и заняться любимыми делами 😎"
 	MsgEventsList       = "📅 <b>Ваши события на сегодня:</b>"
 	MsgDeleteAllError   = "❌ <b>Ошибка:</b> не удалось отменить все события.\nПопробуйте снова чуть позже."
@@ -23,11 +25,11 @@ const (
 // Кнопки
 const (
 	BtnMenuTitle            = "📖 Главное меню"
-	BtnAddEvent             = "➕ Создать событие"
-	BtnTodayEvents          = "📅 Мои планы на сегодня"
-	BtnAllEvents            = "🗂 Все запланированные события"
-	BtnCancelAllTodayEvents = "❌ Отменить планы на сегодня"
-	BtnDeleteEvent          = "🗑 Удалить выбранное событие"
+	BtnSetCreateEventState  = "➕ Создать событие"
+	BtnGetEventToday        = "📅 На сегодня"
+	BtnGetEventsActual      = "🗂 Все события"
+	BtnDeleteAllEventsToday = "❌ Отменить на сегодня"
+	BtnDeleteEvent          = "🗑 Удалить событие"
 )
 
 // Шаблоны

@@ -61,6 +61,11 @@ func (r *EventRepository) GetEvents(ctx context.Context, userId int) ([]domain.E
 	return r.queryEventsWithArgs(ctx, where, userId)
 }
 
+func (r *EventRepository) GetEventsActual(ctx context.Context, userId int) ([]domain.Event, error) {
+	const where = `WHERE user_id = $1 AND time >= NOW()`
+	return r.queryEventsWithArgs(ctx, where, userId)
+}
+
 func (r *EventRepository) DeleteEventFromToday(ctx context.Context, userId int) error {
 	const q = `DELETE FROM events WHERE user_id = $1 AND time::date = CURRENT_DATE`
 	if _, err := r.db.ExecContext(ctx, q, userId); err != nil {

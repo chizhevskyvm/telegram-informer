@@ -5,7 +5,7 @@ import (
 	"fmt"
 	botcommon "telegram-informer/common/bot"
 	"telegram-informer/common/utils"
-	updatehelper "telegram-informer/internal/bot/handlers/update-helper"
+	updatehelper "telegram-informer/internal/bot/handlers/update_helper"
 
 	"github.com/go-telegram/bot"
 

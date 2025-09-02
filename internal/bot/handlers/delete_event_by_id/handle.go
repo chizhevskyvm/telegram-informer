@@ -3,7 +3,7 @@ package deleteeventbyid
 import (
 	"context"
 	botcommon "telegram-informer/common/bot"
-	updatehelper "telegram-informer/internal/bot/handlers/update-helper"
+	updatehelper "telegram-informer/internal/bot/handlers/update_helper"
 	"telegram-informer/internal/bot/ui/texts"
 
 	"github.com/go-telegram/bot"

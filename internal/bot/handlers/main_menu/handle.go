@@ -20,12 +20,12 @@ func NewHandle() *Handle {
 var menuKeyboard = &models.InlineKeyboardMarkup{
 	InlineKeyboard: [][]models.InlineKeyboardButton{
 		{
-			{Text: texts.BtnAddEvent, CallbackData: handlers.CBSetCreateEventState}},
+			{Text: texts.BtnSetCreateEventState, CallbackData: handlers.CBSetCreateEventState}},
 		{
-			{Text: texts.BtnTodayEvents, CallbackData: handlers.CBGetEventToday},
-			{Text: texts.BtnAllEvents, CallbackData: handlers.CBAllEvents},
+			{Text: texts.BtnGetEventToday, CallbackData: handlers.CBGetEventToday},
+			{Text: texts.BtnGetEventsActual, CallbackData: handlers.CBGetEventsActual},
 		},
-		{{Text: texts.BtnCancelAllTodayEvents, CallbackData: handlers.CBDeleteAllEventsToday}},
+		{{Text: texts.BtnDeleteAllEventsToday, CallbackData: handlers.CBDeleteAllEventsToday}},
 	},
 }
 
